@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>LX-Player - Ultra Streaming Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .glass { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(30, 41, 59, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.06); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(37, 99, 235, 0.5); border-radius: 4px; }
+    #carousel-indicators::-webkit-scrollbar { display: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media (max-width: 639px) {
+      #sidebar-nav {
+        transform: translateX(-100%);
+        width: 12rem !important;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
+      }
+      #sidebar-nav.drawer-open {
+        transform: translateX(0);
+      }
+      /* Always show text labels next to icons in the mobile drawer */
+      #sidebar-nav .opacity-0 {
+        opacity: 100 !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen custom-scrollbar selection:bg-blue-600 selection:text-white flex flex-col justify-between">
+
+  <!-- Left Sidebar Navigation (Jio Hotstar style) -->
+  <aside id="sidebar-nav" class="fixed left-0 top-0 h-screen z-50 bg-slate-950/95 border-r border-slate-900 transition-all duration-300 w-16 hover:w-48 overflow-hidden flex flex-col items-start py-6 group/sidebar">
+    
+    <!-- Close Button on Mobile Sidebar Drawer -->
+    <button onclick="toggleSidebar(event)" class="absolute top-4 right-4 block sm:hidden text-slate-400 hover:text-white transition-colors cursor-pointer z-50" title="Close">
+      <i class="fa-solid fa-xmark text-sm"></i>
+    </button>
+    
+    <!-- Brand Logo in Sidebar (Play Button Blue Gradient) -->
+    <div class="flex items-center gap-4 px-3.5 py-2 w-full select-none mb-8">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-blue-600 to-cyan-500 flex items-center justify-center shadow shadow-blue-500/35 flex-shrink-0">
+        <i class="fa-solid fa-play text-white text-xs pl-0.5 animate-pulse"></i>
+      </div>
+      <div class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap flex flex-col justify-center">
+        <span class="text-xs font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">LX-PLAYER</span>
+        <span class="text-[7px] text-cyan-400 font-bold uppercase tracking-widest leading-none">Ultra Engine</span>
+      </div>
+    </div>
+
+    <!-- Navigation Items -->
+    <nav class="flex-1 flex flex-col gap-5 w-full px-3">
+      <!-- Home Link -->
+      <button onclick="switchCategory('home')" id="side-tab-home" class="side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs" title="Home">
+        <i class="fa-solid fa-house text-sm w-5 text-center flex-shrink-0"></i>
+        <span class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Home</span>
+      </button>
+      <!-- Bollywood Link -->
+      <button onclick="switchCategory('bollywood')" id="side-tab-bollywood" class="side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs" title="Bollywood">
+        <i class="fa-solid fa-film text-sm w-5 text-center flex-shrink-0"></i>
+        <span class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Bollywood</span>
+      </button>
+      <!-- Hollywood Link -->
+      <button onclick="switchCategory('hollywood')" id="side-tab-hollywood" class="side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs" title="Hollywood">
+        <i class="fa-solid fa-clapperboard text-sm w-5 text-center flex-shrink-0"></i>
+        <span class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Hollywood</span>
+      </button>
+
+      <hr class="border-slate-900 my-1 w-[80%] mx-auto" />
+
+      <!-- Watchlist Shortcut -->
+      <button onclick="scrollToSection('watchlist-section')" class="flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs" title="Watchlist">
+        <i class="fa-solid fa-heart text-sm w-5 text-center flex-shrink-0"></i>
+        <span class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Watchlist</span>
+      </button>
+      <!-- Continue Watching Shortcut -->
+      <button onclick="scrollToSection('continue-watching-section')" class="flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs" title="Continue Watching">
+        <i class="fa-solid fa-clock-rotate-left text-sm w-5 text-center flex-shrink-0"></i>
+        <span class="opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300 whitespace-nowrap">Continue Watching</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Top Fixed Transparent Navbar -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-slate-950/90 to-transparent pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] pt-6 pb-3 transition-colors duration-300 border-none">
+    <div class="w-full flex flex-row items-center justify-between sm:justify-end gap-3">
+      
+      <!-- Hamburger Menu Toggle Button on Mobile -->
+      <button onclick="toggleSidebar(event)" class="block sm:hidden text-white text-base p-1.5 focus:outline-none hover:text-blue-500 transition-colors mr-2 flex-shrink-0 cursor-pointer" title="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <!-- Live Responsive Search Bar -->
+      <div class="w-full max-w-xs sm:max-w-md">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input id="search-box" type="text" oninput="handleSearch(this.value)" placeholder="Search 14,000+ titles (e.g. 2026, Action, Jawan)..." class="w-full bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-xl pl-9 pr-9 py-2.5 sm:py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder-white/70" />
+          <button onclick="clearSearch()" id="btn-clear-search" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white hidden"><i class="fa-solid fa-circle-xmark text-xs"></i></button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Trending Movie Carousel Banner (Full Width, Jio Hotstar style) -->
+  <div id="trending-carousel-container" class="relative w-full h-[65vh] sm:h-[70vh] md:h-[80vh] lg:h-[85vh] overflow-hidden bg-slate-950 group hidden">
+    <div id="carousel-slides" class="relative w-full h-[calc(100%-32px)] sm:h-full"></div>
+    <div id="carousel-indicators" class="absolute bottom-1 left-1/2 -translate-x-1/2 sm:bottom-6 sm:right-6 sm:left-auto sm:translate-x-0 flex items-center gap-3 z-20 max-w-[90%] overflow-x-auto overflow-y-hidden no-scrollbar py-1"></div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="w-full pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] py-4 sm:py-6 space-y-6">
+
+    <!-- Continue Watching Section -->
+    <div id="continue-watching-section" class="hidden space-y-3">
+      <h3 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+        <i class="fa-solid fa-clock-rotate-left text-blue-500"></i> Continue Watching
+      </h3>
+      <div id="continue-watching-list" class="flex gap-4 overflow-x-auto overflow-y-hidden py-5 -my-5 pb-8 no-scrollbar select-none"></div>
+    </div>
+
+    <!-- Watchlist Section -->
+    <div id="watchlist-section" class="hidden space-y-3">
+      <h3 class="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+        <i class="fa-solid fa-heart text-blue-500"></i> My Watchlist
+      </h3>
+      <div id="watchlist-list" class="flex gap-4 overflow-x-auto overflow-y-hidden py-5 -my-5 pb-8 no-scrollbar select-none"></div>
+    </div>
+
+    <!-- Section Title (Clean Jio Hotstar style) -->
+    <div class="pt-4 pb-2">
+      <h2 id="section-title" class="text-xl sm:text-2xl font-bold tracking-tight text-white">
+        New Movies
+      </h2>
+      <!-- Hidden elements to keep JavaScript working without errors -->
+      <span id="item-count" class="hidden"></span>
+      <input id="jump-page-input" type="hidden" />
+    </div>
+
+    <!-- Responsive Live Video Grid -->
+    <div id="video-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 md:gap-8"></div>
+
+    <!-- Responsive Numbered Pagination -->
+    <div id="pagination" class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 mt-16 pt-10 pb-12 select-none overflow-x-auto custom-scrollbar"></div>
+
+  </main>
+
+  <!-- Responsive Footer -->
+  <footer class="glass border-t border-slate-800/80 py-4 pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] text-center text-[9.5px] sm:text-[11px] font-medium tracking-wide text-slate-400">
+    <strong>LX-Player</strong> • 100% Private Ad-Free Streaming Player
+  </footer>
+
+  <!-- Completely Private Video Player Modal (No Raw Links Visible) -->
+  <div id="player-modal" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-3 sm:p-4 md:p-6 hidden">
+    <div id="modal-content-box" class="glass rounded-2xl sm:rounded-3xl border border-slate-800 w-full max-w-5xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh]">
+      
+      <!-- Player Header (Private, No URLs Displayed) -->
+      <div class="p-3.5 sm:p-4 px-4 sm:px-6 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between gap-3">
+        <div class="space-y-0.5 min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 id="player-title" class="text-sm sm:text-base font-bold text-white truncate">Movie Title</h3>
+            <span class="px-2 py-0.5 rounded bg-emerald-600/20 text-emerald-300 text-[9px] sm:text-[10px] font-bold border border-emerald-500/30 flex-shrink-0">
+              <i class="fa-solid fa-shield-halved text-[8px] mr-1"></i> PRIVATE 4K
+            </span>
+          </div>
+          <p class="text-[10px] sm:text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Encrypted High-Speed Stream Session
+          </p>
+        </div>
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <button onclick="closePlayer()" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white flex items-center justify-center transition-all" title="Close Player">
+            <i class="fa-solid fa-xmark text-sm sm:text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Player Video Container (Adaptive 16:9 Aspect Ratio) -->
+      <div id="video-container" class="relative bg-black flex items-center justify-center w-full min-h-[220px] sm:min-h-[380px] md:min-h-[460px]">
+        
+        <!-- Animated Buffering Screen Overlay (Clean & Private) -->
+        <div id="buffering-overlay" class="absolute inset-0 z-30 bg-slate-950/85 flex flex-col items-center justify-center space-y-2.5 pointer-events-none hidden">
+          <div class="relative flex items-center justify-center">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+            <i class="fa-solid fa-play text-blue-400 absolute text-xs sm:text-sm animate-pulse ml-0.5"></i>
+          </div>
+          <div class="text-center space-y-1 px-4">
+            <h4 class="text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Initializing Ultra Stream...
+            </h4>
+            <p class="text-[10px] sm:text-xs text-slate-400 font-medium">
+              Establishing private high-speed connection
+            </p>
+          </div>
+        </div>
+
+        <!-- HTML5 Video Element (Hardware Accelerated HLS.js Player) -->
+        <video id="main-video" class="w-full max-h-[50vh] sm:max-h-[60vh] object-contain" controls autoplay playsinline preload="auto"></video>
+
+        <!-- Iframe Element (Embedded Web Player Fallback) -->
+        <iframe id="main-iframe" class="w-full h-[240px] sm:h-[420px] md:h-[480px] border-0 hidden" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe>
+
+      </div>
+
+      <!-- Private Player Controls & Options -->
+      <div class="p-3 sm:p-4 px-4 sm:px-6 bg-slate-900/95 border-t border-slate-800 space-y-2.5 overflow-y-auto max-h-[30vh] custom-scrollbar">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          
+          <!-- Audio Language Track Selector -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-amber-300 flex items-center gap-1">
+              <i class="fa-solid fa-language text-sm sm:text-base"></i> Audio:
+            </span>
+            <select id="audio-language-select" onchange="changeLanguage(this.value)" class="bg-slate-800 border border-slate-700 text-xs rounded-xl px-2.5 py-1 text-white font-medium focus:outline-none focus:border-blue-500">
+              <option value="Default (Original Audio)">Default (Original Audio)</option>
+              <option value="Hindi (Dolby 5.1)">Hindi (Dolby 5.1)</option>
+              <option value="English (Original)">English (Original)</option>
+              <option value="Tamil Audio">Tamil</option>
+              <option value="Telugu Audio">Telugu</option>
+              <option value="Malayalam Audio">Malayalam</option>
+              <option value="Kannada Audio">Kannada</option>
+              <option value="Punjabi Audio">Punjabi</option>
+              <option value="Bengali Audio">Bengali</option>
+            </select>
+          </div>
+
+          <!-- Private Server Switcher -->
+          <div class="flex flex-wrap items-center gap-1.5" id="server-buttons-container"></div>
+
+          <!-- Private Stream Refresh -->
+          <div class="flex items-center gap-2">
+            <button onclick="reloadActiveStream()" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all">
+              <i class="fa-solid fa-rotate-right"></i> Reload Stream
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Language Switch Toast -->
+        <div id="language-toast" class="hidden text-[10px] sm:text-[11px] text-emerald-400 font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-check"></i> <span id="toast-text">Audio track switched.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentCat = 'bollywood';
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentStreamUrl = '';
+    let currentMovie = null;
+    let searchDebounceTimer = null;
+    let hlsInstance = null;
+
+    // Carousel state
+    let currentSlideIndex = 0;
+    let carouselTimer = null;
+    let carouselItems = [];
+
+    function upgradePosterQuality(url) {
+      if (!url) return '';
+      if (url.includes('image.tmdb.org/t/p/')) {
+        return url.replace(/\/t\/p\/w\d+\//, '/t/p/original/');
+      }
+      if (url.includes('elochkaigolochla.com') || url.includes('/340-500/')) {
+        return url.replace(/\/340-500\//, '/1000-1500/');
+      }
+      if (url.includes('media-amazon.com/images/')) {
+        if (url.includes('@.')) {
+          const parts = url.split('@.');
+          let ext = 'jpg';
+          if (url.endsWith('.png')) ext = 'png';
+          else if (url.endsWith('.webp')) ext = 'webp';
+          return parts[0] + '@.' + ext;
+        }
+      }
+      return url;
+    }
+
+    // --- WATCHLIST LOGIC ---
+    function isInWatchlist(movieId) {
+      try {
+        const list = JSON.parse(localStorage.getItem('lx_watchlist') || '[]');
+        return list.some(item => item.id === movieId);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function toggleWatchlist(movie) {
+      if (!movie || !movie.id) return;
+      try {
+        let list = JSON.parse(localStorage.getItem('lx_watchlist') || '[]');
+        const exists = list.some(item => item.id === movie.id);
+        
+        if (exists) {
+          list = list.filter(item => item.id !== movie.id);
+        } else {
+          list.unshift(movie);
+        }
+        
+        localStorage.setItem('lx_watchlist', JSON.stringify(list));
+        renderWatchlist();
+        updateWatchlistButtons(movie.id, !exists);
+      } catch (e) {
+        console.error('Error toggling watchlist:', e);
+      }
+    }
+
+    function toggleWatchlistFromData(encodedData, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const movie = JSON.parse(decodeURIComponent(encodedData));
+      toggleWatchlist(movie);
+    }
+
+    function updateWatchlistButtons(movieId, isAdded) {
+      // Carousel button update
+      const carouselBtn = document.getElementById(`carousel-wl-${movieId}`);
+      if (carouselBtn) {
+        const icon = carouselBtn.querySelector('i');
+        const text = carouselBtn.querySelector('span');
+        if (isAdded) {
+          if (icon) icon.className = 'fa-solid fa-check text-emerald-400';
+          if (text) text.innerText = 'Added';
+        } else {
+          if (icon) icon.className = 'fa-solid fa-plus';
+          if (text) text.innerText = 'Watchlist';
+        }
+      }
+
+      // Grid cards buttons update
+      const cardBtns = document.querySelectorAll(`.wl-btn-${movieId}`);
+      cardBtns.forEach(btn => {
+        const icon = btn.querySelector('i');
+        if (isAdded) {
+          if (icon) icon.className = 'fa-solid fa-check text-emerald-400';
+          btn.title = "Remove from Watchlist";
+        } else {
+          if (icon) icon.className = 'fa-solid fa-plus';
+          btn.title = "Add to Watchlist";
+        }
+      });
+    }
+
+    function renderWatchlist() {
+      const container = document.getElementById('watchlist-section');
+      const listContainer = document.getElementById('watchlist-list');
+      if (!container || !listContainer) return;
+
+      const list = JSON.parse(localStorage.getItem('lx_watchlist') || '[]');
+      if (list.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      container.classList.remove('hidden');
+      listContainer.innerHTML = '';
+
+      list.forEach(movie => {
+        const movieDataStr = encodeURIComponent(JSON.stringify(movie));
+        const card = document.createElement('div');
+        card.className = 'w-36 sm:w-44 flex-shrink-0 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 cursor-pointer relative group flex flex-col justify-between';
+        card.onclick = () => openLiveStream(movie);
+
+        card.innerHTML = `
+          <!-- Default View -->
+          <div class="relative w-full aspect-[2/3] bg-slate-900 overflow-hidden">
+            <img src="${upgradePosterQuality(movie.poster)}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+            
+            <span class="absolute top-2 right-2 px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-950/80 text-amber-400 border border-slate-800">
+              ${movie.year || '2024'}
+            </span>
+            <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-600 text-white shadow-md">
+              ${movie.quality || 'HD'}
+            </span>
+            
+            <!-- Hover Expand Card Details Overlay -->
+            <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3 text-left z-20">
+              <div class="space-y-1">
+                <h3 class="font-extrabold text-white text-[11px] sm:text-xs line-clamp-1 sm:line-clamp-2 leading-tight">${movie.title}</h3>
+                <div class="flex items-center gap-1.5 text-[9px] text-slate-300 font-bold">
+                  <span class="font-mono text-amber-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">${movie.year || '2024'}</span>
+                  <span class="bg-blue-600 text-white px-1.5 py-0.5 rounded">${movie.quality || 'HD'}</span>
+                </div>
+                <p class="text-[9px] text-slate-400 line-clamp-2 sm:line-clamp-3 leading-normal pt-1">
+                  ${movie.description || 'Watch ' + movie.title + ' in full high-definition private ad-free streaming. Fast servers optimized for high-speed streaming.'}
+                </p>
+                <p class="text-[9px] text-cyan-400 font-bold truncate pt-0.5">${movie.genre || 'Action, Drama'}</p>
+              </div>
+              
+              <div class="flex items-center gap-2 pt-2">
+                <button onclick="openLiveStreamFromData('${movieDataStr}')" class="flex-1 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow shadow-blue-500/25">
+                  <i class="fa-solid fa-play text-[8px]"></i> Watch Now
+                </button>
+                <button onclick="toggleWatchlistFromData('${movieDataStr}', event)" class="wl-btn-${movie.id} w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-center border border-slate-800 transition-all flex-shrink-0" title="Remove">
+                  <i class="fa-solid fa-check text-emerald-400"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="p-2 sm:p-3 space-y-0.5 flex-grow flex flex-col justify-between">
+            <h3 class="font-bold text-white text-xs line-clamp-1 group-hover:text-blue-400 transition-colors">${movie.title}</h3>
+            <p class="text-[10px] text-slate-400 line-clamp-1">${movie.genre || 'Movie'}</p>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    // --- CONTINUE WATCHING LOGIC ---
+    function getSavedProgress(movieId) {
+      try {
+        const list = JSON.parse(localStorage.getItem('lx_continue_watching') || '[]');
+        return list.find(item => item.movie.id === movieId);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveVideoProgress(movie, currentTime, duration) {
+      if (!movie || !movie.id) return;
+      if (currentTime < 5) return; // Don't save if watched less than 5 seconds
+      
+      try {
+        let list = JSON.parse(localStorage.getItem('lx_continue_watching') || '[]');
+        list = list.filter(item => item.movie.id !== movie.id);
+        
+        // If watched more than 95% or remaining time is less than 15s, remove it
+        if (duration && (currentTime > duration - 15 || currentTime / duration > 0.95)) {
+          localStorage.setItem('lx_continue_watching', JSON.stringify(list));
+          renderContinueWatching();
+          return;
+        }
+
+        list.unshift({
+          movie: movie,
+          currentTime: currentTime,
+          duration: duration,
+          updatedAt: Date.now()
+        });
+
+        if (list.length > 10) list = list.slice(0, 10);
+        localStorage.setItem('lx_continue_watching', JSON.stringify(list));
+        renderContinueWatching();
+      } catch (e) {
+        console.error('Error saving progress:', e);
+      }
+    }
+
+    let pendingRemoveId = null;
+
+    function removeContinueWatching(movieId, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      pendingRemoveId = movieId;
+      const modal = document.getElementById('confirm-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      } else {
+        if (confirm('Are you sure you want to remove?')) {
+          doRemoveContinueWatching(movieId);
+        }
+      }
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirm-modal');
+      if (modal) modal.classList.add('hidden');
+      pendingRemoveId = null;
+    }
+
+    function doRemoveContinueWatching(movieId) {
+      try {
+        let list = JSON.parse(localStorage.getItem('lx_continue_watching') || '[]');
+        list = list.filter(item => item.movie.id !== movieId);
+        localStorage.setItem('lx_continue_watching', JSON.stringify(list));
+        renderContinueWatching();
+      } catch (e) {
+        console.error(e);
+      }
+      closeConfirmModal();
+    }
+
+    function renderContinueWatching() {
+      const container = document.getElementById('continue-watching-section');
+      const listContainer = document.getElementById('continue-watching-list');
+      if (!container || !listContainer) return;
+
+      const list = JSON.parse(localStorage.getItem('lx_continue_watching') || '[]');
+      if (list.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      container.classList.remove('hidden');
+      listContainer.innerHTML = '';
+
+      list.forEach(item => {
+        const movie = item.movie;
+        const progressPercent = item.duration ? Math.min(100, Math.max(0, (item.currentTime / item.duration) * 100)) : 0;
+        const card = document.createElement('div');
+        card.className = 'w-36 sm:w-44 flex-shrink-0 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 cursor-pointer relative group flex flex-col justify-between';
+        card.onclick = () => openLiveStream(movie);
+
+        card.innerHTML = `
+          <div class="relative w-full aspect-[2/3] bg-slate-900 overflow-hidden">
+            <img src="${upgradePosterQuality(movie.poster)}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/40">
+              <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-lg text-white">
+                <i class="fa-solid fa-play ml-0.5 text-xs"></i>
+              </div>
+            </div>
+            <button onclick="removeContinueWatching('${movie.id}', event)" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-950/90 hover:bg-red-600 text-white flex items-center justify-center transition-all z-30 shadow-lg cursor-pointer" title="Remove">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-slate-800">
+              <div class="h-full bg-blue-600" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
+          <div class="p-2 flex-grow flex flex-col justify-between">
+            <h4 class="font-bold text-white text-[11px] truncate group-hover:text-blue-400 transition-colors">${movie.title}</h4>
+            <p class="text-[9px] text-slate-400 truncate">${movie.genre || 'Movie'} • ${movie.year}</p>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    // --- CAROUSEL LOGIC ---
+    async function loadTrendingCarousel(cat) {
+      try {
+        const url = `/api/videos?type=${cat}&page=1&limit=5`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.status === 'success' && data.records) {
+          initCarousel(data.records);
+        }
+      } catch (err) {
+        console.error('Error fetching trending:', err);
+      }
+    }
+
+    function initCarousel(items) {
+      carouselItems = items;
+      const slidesContainer = document.getElementById('carousel-slides');
+      const indicatorsContainer = document.getElementById('carousel-indicators');
+      if (!slidesContainer || !indicatorsContainer) return;
+      
+      slidesContainer.innerHTML = '';
+      indicatorsContainer.innerHTML = '';
+      
+      if (!items || items.length === 0) {
+        document.getElementById('trending-carousel-container').classList.add('hidden');
+        return;
+      }
+
+      // Do not display carousel if search is active
+      const searchBox = document.getElementById('search-box');
+      if (searchBox && searchBox.value.trim() !== '') {
+        document.getElementById('trending-carousel-container').classList.add('hidden');
+      } else {
+        document.getElementById('trending-carousel-container').classList.remove('hidden');
+      }
+
+      items.forEach((it, idx) => {
+        const inWatchlist = isInWatchlist(it.id);
+        const wlIcon = inWatchlist ? 'fa-check text-emerald-400' : 'fa-plus';
+        const wlText = inWatchlist ? 'Added' : 'Watchlist';
+        const movieDataStr = encodeURIComponent(JSON.stringify(it));
+
+        const slide = document.createElement('div');
+        slide.id = `slide-${idx}`;
+        slide.className = `carousel-slide absolute inset-0 w-full h-full opacity-0 transition-all duration-700 ease-in-out ${idx === 0 ? 'opacity-100 z-10' : 'z-0 pointer-events-none'}`;
+        slide.innerHTML = `
+          <!-- High-Quality Widescreen Backdrop (Video Trailer style) -->
+          <div class="absolute left-4 sm:left-28 md:left-32 lg:left-36 xl:left-[100px] top-6 sm:top-10 md:top-12 bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 xl:bottom-12 w-[calc(100%-2rem)] sm:w-[30rem] overflow-hidden bg-slate-950 rounded-2xl sm:rounded-3xl">
+            <img src="${upgradePosterQuality(it.poster)}" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80'" class="absolute inset-0 w-full h-full object-cover opacity-100 object-center" />
+            <!-- Soft left fade to protect text readability -->
+            <div class="absolute inset-y-0 left-0 w-[60%] bg-gradient-to-r from-slate-950 via-slate-950/75 to-transparent z-10"></div>
+            <!-- Bottom fade to blend with page content -->
+            <div class="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-10"></div>
+            <!-- Top fade under navbar -->
+            <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/50 to-transparent z-10"></div>
+          </div>
+          
+          <!-- Content Container -->
+          <div class="relative w-full h-full flex flex-row items-end justify-start pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] pt-16 sm:pt-24 pb-4 sm:pb-10 md:pb-12 gap-4 sm:gap-6 z-10">
+            <!-- Left Info -->
+            <div class="flex-1 min-w-0 space-y-3 sm:space-y-4 p-4 max-w-[30rem] text-left">
+              <div class="text-[9px] sm:text-xs font-bold text-cyan-400 tracking-wider uppercase mb-1" style="text-shadow: 0 2px 4px rgba(0,0,0,0.95);">
+                Trending Movie
+              </div>
+              <h2 class="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight line-clamp-2" style="text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 4px 20px rgba(0,0,0,0.95), -1px -1px 0 rgba(0,0,0,0.4), 1px -1px 0 rgba(0,0,0,0.4), -1px 1px 0 rgba(0,0,0,0.4), 1px 1px 0 rgba(0,0,0,0.4);">
+                ${it.title}
+              </h2>
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-xs text-slate-300 font-semibold py-0.5">
+                <span class="font-mono text-amber-400 font-bold bg-slate-900/85 px-1.5 py-0.5 rounded border border-slate-800" style="text-shadow: 0 1px 3px rgba(0,0,0,0.9);">${it.year}</span>
+                <span>•</span>
+                <span class="text-cyan-400 font-bold bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">${it.quality}</span>
+                <span>•</span>
+                <span class="bg-slate-900/60 px-1.5 py-0.5 rounded border border-slate-800/40">${it.genre}</span>
+              </div>
+              <p class="text-[10px] sm:text-sm text-slate-355 font-normal leading-relaxed line-clamp-2 sm:line-clamp-3 max-w-xl" style="text-shadow: 0 2px 8px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.95);">
+                ${it.description || 'Watch ' + it.title + ' online in full high-definition streaming. Secure, ad-free access directly through LX-Player.'}
+              </p>
+              <div class="flex items-center gap-3 pt-1.5 sm:pt-2">
+                <button onclick="openLiveStreamFromData('${movieDataStr}')" class="px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-[10px] sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-all shadow-lg shadow-blue-500/25 hover:scale-105 duration-200">
+                  <i class="fa-solid fa-play"></i> Watch Now
+                </button>
+                <button onclick="toggleWatchlistFromData('${movieDataStr}', event)" id="carousel-wl-${it.id}" class="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-center border border-slate-800 transition-all hover:scale-105 duration-200" title="Watchlist">
+                  <i class="fa-solid ${wlIcon} text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        slidesContainer.appendChild(slide);
+
+        const indicator = document.createElement('button');
+        indicator.className = idx === 0 
+          ? 'relative w-1.5 h-1.5 sm:w-16 sm:h-24 rounded-full sm:rounded-lg overflow-hidden flex-shrink-0 transition-all duration-300 border border-white bg-white sm:bg-transparent sm:border-2 scale-105 shadow-lg shadow-white/10' 
+          : 'relative w-1 h-1 sm:w-16 sm:h-24 rounded-full sm:rounded-lg overflow-hidden flex-shrink-0 transition-all duration-300 border border-slate-600 bg-slate-600/40 sm:bg-transparent sm:border-2 hover:border-slate-400';
+        indicator.innerHTML = `
+          <img src="${upgradePosterQuality(it.poster)}" class="hidden sm:block w-full h-full object-cover z-10" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80'" />
+        `;
+        indicator.onclick = () => showSlide(idx);
+        indicatorsContainer.appendChild(indicator);
+      });
+
+      currentSlideIndex = 0;
+      startCarouselTimer();
+    }
+
+    function showSlide(index) {
+      if (!carouselItems || carouselItems.length === 0) return;
+      
+      if (index >= carouselItems.length) index = 0;
+      if (index < 0) index = carouselItems.length - 1;
+
+      const oldSlide = document.getElementById(`slide-${currentSlideIndex}`);
+      if (oldSlide) {
+        oldSlide.classList.remove('opacity-100', 'z-10');
+        oldSlide.classList.add('opacity-0', 'z-0', 'pointer-events-none');
+      }
+
+      const newSlide = document.getElementById(`slide-${index}`);
+      if (newSlide) {
+        newSlide.classList.remove('opacity-0', 'z-0', 'pointer-events-none');
+        newSlide.classList.add('opacity-100', 'z-10');
+      }
+
+      const indicators = document.getElementById('carousel-indicators').children;
+      if (indicators && indicators.length > currentSlideIndex) {
+        indicators[currentSlideIndex].className = 'relative w-1 h-1 sm:w-16 sm:h-24 rounded-full sm:rounded-lg overflow-hidden flex-shrink-0 transition-all duration-300 border border-slate-600 bg-slate-600/40 sm:bg-transparent sm:border-2 hover:border-slate-400';
+      }
+      if (indicators && indicators.length > index) {
+        indicators[index].className = 'relative w-1.5 h-1.5 sm:w-16 sm:h-24 rounded-full sm:rounded-lg overflow-hidden flex-shrink-0 transition-all duration-300 border border-white bg-white sm:bg-transparent sm:border-2 scale-105 shadow-lg shadow-white/10';
+      }
+
+      currentSlideIndex = index;
+      resetCarouselTimer();
+    }
+
+    function nextSlide() {
+      showSlide(currentSlideIndex + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlideIndex - 1);
+    }
+
+    function startCarouselTimer() {
+      if (carouselTimer) clearInterval(carouselTimer);
+      carouselTimer = setInterval(nextSlide, 3000);
+    }
+
+    function resetCarouselTimer() {
+      if (carouselTimer) {
+        clearInterval(carouselTimer);
+        startCarouselTimer();
+      }
+    }
+
+    function openLiveStreamFromData(encodedData) {
+      const movie = JSON.parse(decodeURIComponent(encodedData));
+      openLiveStream(movie);
+    }
+
+    async function loadLiveCatalog(cat, page = 1, searchQuery = '') {
+      currentCat = cat;
+      currentPage = page;
+      const grid = document.getElementById('video-grid');
+      grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 text-xs sm:text-sm"><i class="fa-solid fa-spinner fa-spin text-red-500 mr-2 text-base"></i> Loading private streaming catalog...</div>';
+
+      // Hide carousel during search
+      const carouselContainer = document.getElementById('trending-carousel-container');
+      if (carouselContainer) {
+        if (searchQuery) {
+          carouselContainer.classList.add('hidden');
+        } else if (carouselItems && carouselItems.length > 0) {
+          carouselContainer.classList.remove('hidden');
+        }
+      }
+
+      try {
+        let url = `/api/videos?type=${cat}&page=${page}&limit=30`;
+        if (searchQuery) {
+          url += `&search=${encodeURIComponent(searchQuery)}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          totalPages = data.total_pages || Math.ceil((data.total_available || 1) / 30);
+          document.getElementById('item-count').innerText = `${data.total_available.toLocaleString()} Titles (P. ${page}/${totalPages})`;
+          document.getElementById('jump-page-input').max = totalPages;
+          renderGrid(data.records);
+          renderPagination(currentPage, totalPages, searchQuery);
+        } else {
+          grid.innerHTML = `<div class="col-span-full text-rose-400 text-center py-20 text-xs sm:text-sm">Database Error: ${data.message}</div>`;
+        }
+      } catch (err) {
+        grid.innerHTML = `<div class="col-span-full text-rose-400 text-center py-20 text-xs sm:text-sm">Connection Error: ${err.message}</div>`;
+      }
+    }
+
+    function switchCategory(cat) {
+      // Toggle sidebar active nav item highlight (clean text color transition, no bg/border/radius)
+      document.querySelectorAll('.side-nav-item').forEach(b => {
+        b.className = 'side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-slate-400 hover:text-white transition-all w-full text-left font-bold text-xs';
+      });
+      const activeSide = document.getElementById('side-tab-' + cat);
+      if (activeSide) {
+        activeSide.className = 'side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-white transition-all w-full text-left font-bold text-xs';
+      }
+
+      let titleHTML = '';
+      let loadCat = cat;
+      if (cat === 'home') {
+        titleHTML = 'Home';
+        loadCat = 'bollywood';
+      } else if (cat === 'bollywood') {
+        titleHTML = 'New Movies';
+      } else if (cat === 'hollywood') {
+        titleHTML = 'Hollywood Movies';
+      } else if (cat === 'webseries') {
+        titleHTML = 'Web Series';
+      } else if (cat === 'kdrama') {
+        titleHTML = 'K-Drama';
+      }
+      
+      document.getElementById('section-title').innerHTML = titleHTML;
+      document.getElementById('search-box').value = '';
+      document.getElementById('btn-clear-search').classList.add('hidden');
+      loadTrendingCarousel(loadCat);
+      loadLiveCatalog(loadCat, 1);
+    }
+
+    function renderGrid(records) {
+      const grid = document.getElementById('video-grid');
+      grid.innerHTML = '';
+
+      if (!records || records.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-500 text-xs sm:text-sm">No titles matched your query.</div>';
+        return;
+      }
+
+      records.forEach(it => {
+        const card = document.createElement('div');
+        card.className = 'glass-card rounded-2xl overflow-hidden hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 flex flex-col justify-between group cursor-pointer relative max-w-[280px] sm:max-w-none mx-auto w-full';
+        card.onclick = () => openLiveStream(it);
+
+        const inWatchlist = isInWatchlist(it.id);
+        const movieDataStr = encodeURIComponent(JSON.stringify(it));
+
+        card.innerHTML = `
+          <!-- Default View -->
+          <div class="relative w-full aspect-[2/3] bg-slate-900 overflow-hidden">
+            <img src="${upgradePosterQuality(it.poster)}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+            
+            <span class="absolute top-2 right-2 px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-950/80 text-amber-400 border border-slate-800">
+              ${it.year || '2024'}
+            </span>
+            <span class="absolute bottom-2 left-2 px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-600 text-white shadow-md">
+              ${it.quality || 'HD'}
+            </span>
+            
+            <!-- Hover Expand Card Details Overlay -->
+            <div class="absolute inset-0 bg-slate-950/95 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-3 sm:p-4 text-left z-20">
+              <div class="space-y-1 sm:space-y-1.5">
+                <h3 class="font-extrabold text-white text-[11px] sm:text-xs line-clamp-2 leading-tight">${it.title}</h3>
+                <div class="flex items-center gap-1.5 text-[9px] text-slate-300 font-bold">
+                  <span class="font-mono text-amber-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">${it.year || '2024'}</span>
+                  <span class="bg-blue-600 text-white px-1.5 py-0.5 rounded">${it.quality || 'HD'}</span>
+                </div>
+                <p class="text-[9px] sm:text-[10px] text-slate-400 line-clamp-3 sm:line-clamp-4 leading-normal pt-1">
+                  ${it.description || 'Watch ' + it.title + ' in full high-definition private ad-free streaming. Fast servers optimized for high-speed streaming.'}
+                </p>
+                <p class="text-[9px] text-cyan-400 font-bold truncate pt-1">${it.genre || 'Action, Drama'}</p>
+              </div>
+              
+              <div class="flex items-center gap-2 pt-2">
+                <button onclick="openLiveStreamFromData('${movieDataStr}')" class="flex-1 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-[10px] sm:text-[11px] font-bold flex items-center justify-center gap-1 transition-all shadow shadow-blue-500/25">
+                  <i class="fa-solid fa-play text-[8px]"></i> Watch Now
+                </button>
+                <button onclick="toggleWatchlistFromData('${movieDataStr}', event)" class="wl-btn-${it.id} w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900 hover:bg-slate-850 text-slate-200 hover:text-white flex items-center justify-center border border-slate-800 transition-all flex-shrink-0" title="${inWatchlist ? 'Remove' : 'Add'}">
+                  <i class="fa-solid ${inWatchlist ? 'fa-check text-emerald-400' : 'fa-plus'}"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="p-2.5 sm:p-3 space-y-0.5 flex-grow flex flex-col justify-between">
+            <h3 class="font-bold text-white text-xs line-clamp-1 group-hover:text-blue-400 transition-colors">${it.title}</h3>
+            <p class="text-[10px] text-slate-400 line-clamp-1">${it.genre || 'Movie'}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderPagination(current, total, query) {
+      const p = document.getElementById('pagination');
+      p.innerHTML = '';
+      if (total <= 1) return;
+
+      function makeBtn(text, targetPage, active = false, disabled = false, extraClass = '') {
+        const btn = document.createElement('button');
+        btn.innerHTML = text;
+        btn.disabled = disabled;
+        let baseClass = active 
+          ? 'px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-md shadow-blue-600/30'
+          : disabled 
+          ? 'px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-900/50 text-slate-600 text-xs font-semibold cursor-not-allowed border border-slate-800/40'
+          : 'px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-800 transition-all';
+        if (extraClass) {
+          baseClass += ' ' + extraClass;
+        }
+        btn.className = baseClass;
+        btn.onclick = () => {
+          window.scrollTo({ top: 100, behavior: 'smooth' });
+          loadLiveCatalog(currentCat, targetPage, query);
+        };
+        return btn;
+      }
+
+      p.appendChild(makeBtn('<i class="fa-solid fa-angles-left"></i>', 1, false, current === 1, 'hidden sm:inline-block'));
+      p.appendChild(makeBtn('<i class="fa-solid fa-angle-left"></i>', current - 1, false, current === 1));
+
+      let startPage = Math.max(1, current - 1);
+      let endPage = Math.min(total, current + 1);
+
+      if (startPage > 1) {
+        p.appendChild(makeBtn('1', 1, current === 1));
+        if (startPage > 2) {
+          const dots = document.createElement('span');
+          dots.className = 'px-1.5 text-slate-500 text-xs';
+          dots.innerText = '...';
+          p.appendChild(dots);
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        p.appendChild(makeBtn(i.toString(), i, i === current));
+      }
+
+      if (endPage < total) {
+        if (endPage < total - 1) {
+          const dots = document.createElement('span');
+          dots.className = 'px-1.5 text-slate-500 text-xs';
+          dots.innerText = '...';
+          p.appendChild(dots);
+        }
+        p.appendChild(makeBtn(total.toString(), total, current === total));
+      }
+
+      p.appendChild(makeBtn('<i class="fa-solid fa-angle-right"></i>', current + 1, false, current === total));
+      p.appendChild(makeBtn('<i class="fa-solid fa-angles-right"></i>', total, false, current === total, 'hidden sm:inline-block'));
+    }
+
+    function jumpToPage() {
+      const val = parseInt(document.getElementById('jump-page-input').value);
+      if (val && val >= 1 && val <= totalPages) {
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        loadLiveCatalog(currentCat, val, document.getElementById('search-box').value.trim());
+      }
+    }
+
+    function openLiveStream(it) {
+      currentMovie = it;
+      const urls = it.client_urls && it.client_urls.length > 0 ? it.client_urls : [{"label": "Server 1", "url": it.stream_url}];
+      
+      currentStreamUrl = urls[0].url;
+      document.getElementById('player-title').innerText = `${it.title} (${it.year})`;
+      document.getElementById('audio-language-select').value = "Default (Original Audio)";
+
+      // Populate Server Switcher without exposing raw URLs
+      const srvContainer = document.getElementById('server-buttons-container');
+      srvContainer.innerHTML = '<span class="text-xs font-bold text-slate-400">Servers:</span>';
+      
+      urls.forEach((srv, idx) => {
+        const btn = document.createElement('button');
+        btn.className = idx === 0 
+          ? 'px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold shadow'
+          : 'px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-all';
+        btn.innerText = srv.label || `Server ${idx + 1}`;
+        btn.onclick = () => {
+          currentStreamUrl = srv.url;
+          srvContainer.querySelectorAll('button').forEach(b => b.className = 'px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold transition-all');
+          btn.className = 'px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-bold shadow';
+          playStream(currentStreamUrl);
+        };
+        srvContainer.appendChild(btn);
+      });
+
+      playStream(currentStreamUrl);
+      document.getElementById('player-modal').classList.remove('hidden');
+    }
+
+    function playStream(url) {
+      const v = document.getElementById('main-video');
+      const iframe = document.getElementById('main-iframe');
+      const overlay = document.getElementById('buffering-overlay');
+
+      overlay.classList.remove('hidden');
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      if (!url) {
+        overlay.classList.add('hidden');
+        return;
+      }
+
+      // Check if there is saved progress for this movie
+      let hasSeeked = false;
+      const progress = getSavedProgress(currentMovie.id);
+      
+      const seekProgress = () => {
+        if (!hasSeeked && progress && progress.currentTime > 5) {
+          hasSeeked = true;
+          v.currentTime = progress.currentTime;
+          console.log(`Resumed playback from: ${progress.currentTime}s`);
+        }
+      };
+
+      const isHLS = url.toLowerCase().includes('m3u8') || url.toLowerCase().includes('missipmain') || url.toLowerCase().includes('getstream');
+      const isDirectMP4 = url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mkv') || url.toLowerCase().includes('.webm');
+
+      if (isHLS || isDirectMP4) {
+        iframe.classList.add('hidden');
+        v.classList.remove('hidden');
+
+        v.oncanplay = () => {
+          overlay.classList.add('hidden');
+          seekProgress();
+        };
+        v.onplaying = () => {
+          overlay.classList.add('hidden');
+          seekProgress();
+        };
+        v.onloadedmetadata = () => {
+          seekProgress();
+        };
+
+        if (isHLS && Hls.isSupported()) {
+          hlsInstance = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            xhrSetup: (xhr) => {
+              xhr.withCredentials = false;
+            }
+          });
+          hlsInstance.loadSource(url);
+          hlsInstance.attachMedia(v);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            overlay.classList.add('hidden');
+            seekProgress();
+            v.play().catch(e => console.log('Autoplay deferred:', e));
+          });
+          hlsInstance.on(Hls.Events.ERROR, (e, data) => {
+            if (data.fatal) {
+              overlay.classList.add('hidden');
+            }
+          });
+        } else if (v.canPlayType('application/vnd.apple.mpegurl')) {
+          v.src = url;
+          v.play().catch(() => {});
+        } else {
+          v.src = url;
+          v.play().catch(() => {});
+        }
+      } else {
+        v.classList.add('hidden');
+        iframe.classList.remove('hidden');
+        iframe.onload = () => overlay.classList.add('hidden');
+        iframe.src = url;
+        setTimeout(() => overlay.classList.add('hidden'), 2500);
+      }
+    }
+
+    function changeLanguage(langName) {
+      const toast = document.getElementById('language-toast');
+      const toastText = document.getElementById('toast-text');
+      toastText.innerText = `Audio track set to: ${langName}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    function reloadActiveStream() {
+      if (currentStreamUrl) {
+        playStream(currentStreamUrl);
+      }
+    }
+
+    function toggleTheaterMode() {
+      const box = document.getElementById('modal-content-box');
+      box.classList.toggle('max-w-7xl');
+    }
+
+    function closePlayer() {
+      const v = document.getElementById('main-video');
+      const iframe = document.getElementById('main-iframe');
+      
+      // Save progress before closing/pausing
+      if (currentMovie && v.duration) {
+        saveVideoProgress(currentMovie, v.currentTime, v.duration);
+      }
+      
+      v.pause();
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      v.src = '';
+      iframe.src = '';
+      document.getElementById('buffering-overlay').classList.add('hidden');
+      document.getElementById('player-modal').classList.add('hidden');
+      currentMovie = null;
+    }
+
+    function handleSearch(val) {
+      clearTimeout(searchDebounceTimer);
+      const query = val.trim();
+      const clearBtn = document.getElementById('btn-clear-search');
+      if (query) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      searchDebounceTimer = setTimeout(() => {
+        loadLiveCatalog(currentCat, 1, query);
+      }, 350);
+    }
+
+    function clearSearch() {
+      document.getElementById('search-box').value = '';
+      document.getElementById('btn-clear-search').classList.add('hidden');
+      loadLiveCatalog(currentCat, 1);
+    }
+
+    function initSearchTypewriter() {
+      const searchInput = document.getElementById('search-box');
+      if (!searchInput) return;
+
+      const placeholders = [
+        "Search for Bollywood movies...",
+        "Search for Hollywood blockbusters...",
+        "Search for Web Series...",
+        "Search for K-Dramas..."
+      ];
+
+      let currentPhraseIndex = 0;
+      let currentCharIndex = 0;
+      let isDeleting = false;
+      let typingSpeed = 100;
+      let deletingSpeed = 50;
+      let delayBetweenPhrases = 2000;
+
+      function type() {
+        const currentPhrase = placeholders[currentPhraseIndex];
+        
+        if (isDeleting) {
+          searchInput.placeholder = currentPhrase.substring(0, currentCharIndex - 1);
+          currentCharIndex--;
+          
+          if (currentCharIndex === 0) {
+            isDeleting = false;
+            currentPhraseIndex = (currentPhraseIndex + 1) % placeholders.length;
+            setTimeout(type, 500);
+          } else {
+            setTimeout(type, deletingSpeed);
+          }
+        } else {
+          searchInput.placeholder = currentPhrase.substring(0, currentCharIndex + 1);
+          currentCharIndex++;
+          
+          if (currentCharIndex === currentPhrase.length) {
+            isDeleting = true;
+            setTimeout(type, delayBetweenPhrases);
+          } else {
+            setTimeout(type, typingSpeed);
+          }
+        }
+      }
+
+      type();
+    }
+
+    function scrollToSection(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        // Offset scroll slightly to account for fixed navbar
+        const offset = 80;
+        const bodyRect = document.body.getBoundingClientRect().top;
+        const elementRect = el.getBoundingClientRect().top;
+        const elementPosition = elementRect - bodyRect;
+        const offsetPosition = elementPosition - offset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    }
+
+    function toggleSidebar(event) {
+      if (event) event.stopPropagation();
+      const sidebar = document.getElementById('sidebar-nav');
+      if (!sidebar) return;
+      
+      const isOpen = sidebar.classList.toggle('drawer-open');
+      
+      // Toggle backdrop overlay
+      let overlay = document.getElementById('sidebar-overlay');
+      if (isOpen) {
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'sidebar-overlay';
+          overlay.className = 'fixed inset-0 z-45 bg-black/40 backdrop-blur-sm sm:hidden transition-all duration-300';
+          overlay.onclick = () => toggleSidebar();
+          document.body.appendChild(overlay);
+        }
+      } else {
+        if (overlay) {
+          overlay.remove();
+        }
+      }
+    }
+
+    // Scroll listener for sticky transparent header effect
+    window.addEventListener('scroll', () => {
+      const header = document.querySelector('header');
+      if (header) {
+        if (window.scrollY > 40) {
+          header.className = 'fixed top-0 left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-md border-b border-slate-900 pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] py-3 transition-all duration-300';
+        } else {
+          header.className = 'fixed top-0 left-0 right-0 z-40 bg-gradient-to-b from-slate-950/90 to-transparent pl-4 pr-4 sm:pl-28 sm:pr-6 md:pl-32 md:pr-8 lg:pl-36 lg:pr-12 xl:pl-[100px] xl:pr-[100px] pt-6 pb-3 transition-all duration-300 border-none';
+        }
+      }
+    });
+
+    // Initialize on load
+    window.onload = () => {
+      renderContinueWatching();
+      renderWatchlist();
+      loadTrendingCarousel('bollywood');
+      loadLiveCatalog('bollywood', 1);
+      initSearchTypewriter();
+
+      // Highlight Home category initially in left sidebar
+      const activeSide = document.getElementById('side-tab-home');
+      if (activeSide) {
+        activeSide.className = 'side-nav-item flex items-center gap-4 px-3.5 py-2.5 text-white transition-all w-full text-left font-bold text-xs';
+      }
+
+      // Wire up confirm modal button actions
+      const btnYes = document.getElementById('confirm-btn-yes');
+      const btnNo = document.getElementById('confirm-btn-no');
+      if (btnYes && btnNo) {
+        btnYes.onclick = () => {
+          if (pendingRemoveId) {
+            doRemoveContinueWatching(pendingRemoveId);
+          }
+        };
+        btnNo.onclick = () => {
+          closeConfirmModal();
+        };
+      }
+
+      // Listen to video events to save progress
+      const v = document.getElementById('main-video');
+      let lastSaveTime = 0;
+      v.ontimeupdate = () => {
+        const now = Date.now();
+        if (now - lastSaveTime > 2000) {
+          if (currentMovie && v.duration) {
+            saveVideoProgress(currentMovie, v.currentTime, v.duration);
+            lastSaveTime = now;
+          }
+        }
+      };
+      v.onpause = () => {
+        if (currentMovie && v.duration) {
+          saveVideoProgress(currentMovie, v.currentTime, v.duration);
+        }
+      };
+    };
+  </script>
+
+  <!-- Custom Confirmation Modal (Blue & White theme, No icon) -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="glass rounded-2xl border border-blue-500/20 p-6 w-full max-w-sm shadow-2xl flex flex-col items-center text-center gap-4">
+      <div class="space-y-1">
+        <h3 class="font-bold text-white text-base">Remove Movie?</h3>
+        <p class="text-xs text-slate-400">Are you sure you want to remove this from Continue Watching?</p>
+      </div>
+      <div class="flex items-center gap-3 w-full pt-2">
+        <button id="confirm-btn-no" class="flex-1 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-950 text-xs font-bold transition-all cursor-pointer">
+          No
+        </button>
+        <button id="confirm-btn-yes" class="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer">
+          Yes
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

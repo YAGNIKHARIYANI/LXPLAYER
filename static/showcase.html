@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LX-PLAYER - Aesthetic Mobile Feature Showcase</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      background-image: 
+        linear-gradient(rgba(15, 23, 42, 0.4) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, 0.4) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+    .neon-flow {
+      stroke-dasharray: 6;
+      stroke-dashoffset: 0;
+      animation: flow 15s linear infinite;
+      filter: drop-shadow(0 0 2px rgba(34, 211, 238, 0.5));
+    }
+    @keyframes flow {
+      to {
+        stroke-dashoffset: -300;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col items-center justify-between p-4 sm:p-8 overflow-x-hidden relative">
+
+  <!-- Header Banner -->
+  <header class="text-center space-y-2 mt-4 max-w-2xl z-10">
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+      LX-PLAYER MOCKUP PRESENTATION
+    </h1>
+    <p class="text-slate-400 text-xs sm:text-sm font-medium">
+      Designed by Brother & Sister Team for the Web Development Competition
+    </p>
+  </header>
+
+  <!-- Interactive Mockup & Curly Arrows Section -->
+  <div class="relative w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 my-10 z-10">
+    
+    <!-- Left Labels -->
+    <div class="flex flex-col gap-10 lg:w-72 order-2 lg:order-1 text-right lg:items-end">
+      <!-- Feature 1 -->
+      <div class="glass p-4 rounded-2xl max-w-xs shadow-lg shadow-blue-500/5 relative">
+        <h3 class="font-extrabold text-cyan-400 text-sm flex items-center justify-end gap-2 mb-1">
+          Collapsible Sidebar Drawer <i class="fa-solid fa-bars"></i>
+        </h3>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          The menu hides on mobile to reclaim 64px width. A tap on the top-left menu icon slides it open over the screen with labels always visible.
+        </p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="glass p-4 rounded-2xl max-w-xs shadow-lg shadow-blue-500/5 relative">
+        <h3 class="font-extrabold text-cyan-400 text-sm flex items-center justify-end gap-2 mb-1">
+          Symmetric 2-Column Grid <i class="fa-solid fa-table-cells-large"></i>
+        </h3>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          Cards display in two clean columns with a balanced 12px gap. A 32px offset keeps movie posters from touching the sidebar boundary.
+        </p>
+      </div>
+    </div>
+
+    <!-- Center Phone Mockup (Runs the Live App!) -->
+    <div class="relative order-1 lg:order-2 flex-shrink-0">
+      
+      <!-- Smartphone Container -->
+      <div class="relative w-[290px] h-[580px] sm:w-[320px] sm:h-[640px] rounded-[42px] border-[10px] border-slate-800 bg-slate-950 shadow-2xl shadow-blue-500/10 overflow-hidden ring-4 ring-slate-800/50">
+        <!-- Ear Speaker Notch -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-4 bg-slate-800 rounded-b-2xl z-30 flex items-center justify-center">
+          <div class="w-12 h-1 bg-slate-950 rounded-full"></div>
+        </div>
+        
+        <!-- Live App Frame -->
+        <iframe src="/" class="w-full h-full border-none z-10 pt-2"></iframe>
+      </div>
+
+      <!-- SVG Curly Arrows (Desktop view only for alignment) -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none hidden lg:block -translate-x-[15%] -translate-y-[5%]" style="width: 130%; height: 110%; overflow: visible;" viewBox="0 0 500 500">
+        <defs>
+          <marker id="arrow-cyan" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#22d3ee" />
+          </marker>
+          <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#3b82f6" />
+          </marker>
+        </defs>
+
+        <!-- Sidebar Arrow (Top Left Label to Hamburger) -->
+        <path class="neon-flow" d="M 50 100 C 130 100, 160 50, 205 65" fill="none" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrow-cyan)" />
+        
+        <!-- Grid Arrow (Bottom Left Label to Grid) -->
+        <path class="neon-flow" d="M 60 260 C 150 260, 170 340, 205 320" fill="none" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrow-cyan)" />
+
+        <!-- Banner Arrow (Top Right Label to Play Icon) -->
+        <path class="neon-flow" d="M 440 100 C 360 100, 330 160, 285 170" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+
+        <!-- Dots Arrow (Mid Right Label to Indicator Dots) -->
+        <path class="neon-flow" d="M 440 220 C 370 220, 360 250, 310 245" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+
+        <!-- Pagination Arrow (Bottom Right Label to Page numbers) -->
+        <path class="neon-flow" d="M 440 370 C 370 370, 350 440, 290 435" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)" />
+      </svg>
+    </div>
+
+    <!-- Right Labels -->
+    <div class="flex flex-col gap-10 lg:w-72 order-3 lg:items-start">
+      <!-- Feature 3 -->
+      <div class="glass p-4 rounded-2xl max-w-xs shadow-lg shadow-blue-500/5 relative">
+        <h3 class="font-extrabold text-blue-400 text-sm flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-play"></i> Private Streaming Player
+        </h3>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          Taps open a private streaming modal centered vertically on mobile. It is rounded fully as a premium card, removing any awkward top spacing gaps.
+        </p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="glass p-4 rounded-2xl max-w-xs shadow-lg shadow-blue-500/5 relative">
+        <h3 class="font-extrabold text-blue-400 text-sm flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-circle"></i> Sleeker Indicator Dots
+        </h3>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          Carousel indicators are converted to tiny centered dots (4px-6px) and positioned below the banner image, resolving clashing.
+        </p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="glass p-4 rounded-2xl max-w-xs shadow-lg shadow-blue-500/5 relative">
+        <h3 class="font-extrabold text-blue-400 text-sm flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Non-Wrapping Pages
+        </h3>
+        <p class="text-[11px] text-slate-300 leading-relaxed">
+          Double-arrow buttons are hidden on mobile screens, ensuring the numbers fit comfortably in a single line without wrapping.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Developer Card (Brother & Sister Collaboration) -->
+  <section class="w-full max-w-3xl glass rounded-3xl border border-blue-500/20 p-6 sm:p-8 mt-6 mb-8 text-center space-y-6 shadow-xl shadow-blue-500/5 z-10">
+    <div class="space-y-1">
+      <h2 class="text-xl sm:text-2xl font-black text-white tracking-wide">
+        CO-DEVELOPED BY SIBLING TEAM
+      </h2>
+      <p class="text-xs text-cyan-400 uppercase tracking-widest font-extrabold">
+        Partner Project • Web Dev Competition
+      </p>
+    </div>
+
+    <!-- Profile Boxes -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+      <!-- Member 1 -->
+      <div class="flex flex-col items-center bg-slate-950/50 rounded-2xl border border-slate-800 p-4 space-y-3">
+        <!-- Photo Placeholder -->
+        <div class="w-20 h-20 rounded-full bg-blue-600/10 border-2 border-blue-500/30 flex items-center justify-center text-slate-400 overflow-hidden relative group">
+          <i class="fa-solid fa-user text-2xl group-hover:scale-110 transition-transform"></i>
+          <!-- Hint: replace this div with: <img src="file:///your-photo-path.jpg" class="w-full h-full object-cover" /> -->
+        </div>
+        <div class="space-y-0.5">
+          <h4 class="font-extrabold text-white text-sm">[ Sister's Name ]</h4>
+          <p class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">UI/UX & Frontend</p>
+        </div>
+        <p class="text-[10px] text-slate-400 leading-relaxed">
+          Refined mobile elements, resolved clipping scrollbars, customized responsive alignments, and set 100px margins.
+        </p>
+      </div>
+
+      <!-- Member 2 -->
+      <div class="flex flex-col items-center bg-slate-950/50 rounded-2xl border border-slate-800 p-4 space-y-3">
+        <!-- Photo Placeholder -->
+        <div class="w-20 h-20 rounded-full bg-blue-600/10 border-2 border-blue-500/30 flex items-center justify-center text-slate-400 overflow-hidden relative group">
+          <i class="fa-solid fa-user text-2xl group-hover:scale-110 transition-transform"></i>
+          <!-- Hint: replace this div with: <img src="file:///your-photo-path.jpg" class="w-full h-full object-cover" /> -->
+        </div>
+        <div class="space-y-0.5">
+          <h4 class="font-extrabold text-white text-sm">[ Brother's Name ]</h4>
+          <p class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">Backend & API Caching</p>
+        </div>
+        <p class="text-[10px] text-slate-400 leading-relaxed">
+          Optimized background thread catalog preloads, expanded live API cache, and integrated private video players.
+        </p>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

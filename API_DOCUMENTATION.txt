@@ -1,0 +1,214 @@
+====================================================================================================
+           LINUX [YAGNIK HARIYANI WORLD] - COMPLETE API DOCUMENTATION & ARCHITECTURE
+====================================================================================================
+App Name: Linux [Yagnik Hariyani World]
+Version: 10.8.2
+Local Web Server URL: http://127.0.0.1:5100
+Network LAN Access:   http://192.168.1.52:5100
+Authentication: 100% Ad-Free Direct Stream Engine
+====================================================================================================
+
+
+====================================================================================================
+1. SYSTEM ARCHITECTURE & COMPLETE DATA FLOW
+====================================================================================================
+
++--------------------------------------------------------------------------------------------------+
+|                                        DATA FLOW DIAGRAM                                         |
++--------------------------------------------------------------------------------------------------+
+|                                                                                                  |
+|   [Client Browser / Mobile / TV]                                                                 |
+|                 │                                                                                |
+|                 │ 1. HTTP GET Request (/api/videos?type=bollywood&page=1)                        |
+|                 ▼                                                                                |
+|   [Linux [Yagnik Hariyani World] Flask Backend Server (Port 5100)]                               |
+|                 │                                                                                |
+|                 │ 2. Upstream Request to Media Cluster Database                                  |
+|                 ▼                                                                                |
+|   [Media Cloud Database Node]                                                                    |
+|                 │                                                                                |
+|                 │ 3. Returns 14,000+ Real Catalog Records (JSON format)                          |
+|                 ▼                                                                                |
+|   [Backend Data Processing Engine]                                                               |
+|                 │  * Sanitizes URLs and unescapes query parameters                               |
+|                 │  * Strips all Ad Network SDK trackers                                          |
+|                 │  * Filters dead mirrors (e.g. slast430did.com)                                 |
+|                 │  * Prioritizes active Live HLS Stream Servers (missipmain.site / M3U8)         |
+|                 │  * Reverses order (places latest 2026/2025/2024 releases on Page 1)            |
+|                 ▼                                                                                |
+|   [Frontend Streaming Player (HLS.js / HTML5 Video Engine)]                                      |
+|                 │                                                                                |
+|                 │ 4. Direct HLS Adaptive Bitrate Stream Playback (720p / 1080p / 4K)             |
+|                 ▼                                                                                |
+|   [Instant Playback without Any Advertisements or Timer Popups]                                  |
+|                                                                                                  |
++--------------------------------------------------------------------------------------------------+
+
+
+====================================================================================================
+2. ALL API ENDPOINTS WITH CURL COMMANDS & JSON RESPONSES
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+ENDPOINT 1: SYSTEM HEALTH & NETWORK STATUS
+----------------------------------------------------------------------------------------------------
+Description: Returns server health, active status, and local/network LAN access URLs.
+Method:      GET
+Route:       /api/status
+
+[CURL COMMAND]:
+curl -X GET "http://127.0.0.1:5100/api/status" \
+     -H "Accept: application/json"
+
+[SAMPLE JSON RESPONSE]:
+{
+  "app_name": "Linux [Yagnik Hariyani World]",
+  "hls_optimized": true,
+  "local_ip": "192.168.1.52",
+  "local_url": "http://127.0.0.1:5100",
+  "network_url": "http://192.168.1.52:5100",
+  "reversed_order": true,
+  "status": "online"
+}
+
+
+----------------------------------------------------------------------------------------------------
+ENDPOINT 2: BOLLYWOOD MOVIES CATALOG (PAGINATED & REVERSED)
+----------------------------------------------------------------------------------------------------
+Description: Fetches Bollywood movies with recent releases first.
+Method:      GET
+Route:       /api/videos?type=bollywood&page=1&limit=30
+
+[CURL COMMAND]:
+curl -X GET "http://127.0.0.1:5100/api/videos?type=bollywood&page=1&limit=5" \
+     -H "Accept: application/json"
+
+[SAMPLE JSON RESPONSE]:
+{
+  "category": "bollywood",
+  "code": 200,
+  "limit": 5,
+  "page": 1,
+  "records": [
+    {
+      "client_urls": [
+        {
+          "label": "Server 1 (High-Speed HD)",
+          "url": "https://missipmain.site/getm3u8/D6S1XNBL"
+        }
+      ],
+      "genre": "Action, Drama, History",
+      "id": "4930",
+      "languages": [
+        { "code": "hi", "name": "Hindi (Dolby Audio 5.1)" },
+        { "code": "en", "name": "English (Original Audio)" },
+        { "code": "ta", "name": "Tamil (Dubbed / Original)" },
+        { "code": "te", "name": "Telugu (Dubbed / Original)" }
+      ],
+      "poster": "https://m.media-amazon.com/images/M/MV5BZTljOTU3MjQtMjVjYS00NWM5LTljZjQtMjhiM2JmMDYxZjZhXkEyXkFqcGdeQXVyODE5NzE3OTE@._V1_QL50_SY1000_CR0,0,716,1000_AL_.jpg",
+      "quality": "4K / 1080p HD",
+      "rating": "HD",
+      "stream_url": "https://missipmain.site/getm3u8/D6S1XNBL",
+      "title": "Keu Bole Biplobi, Keu Bole Dakat",
+      "year": 2026
+    }
+  ],
+  "status": "success",
+  "total_available": 4931,
+  "total_pages": 987
+}
+
+
+----------------------------------------------------------------------------------------------------
+ENDPOINT 3: HOLLYWOOD MOVIES CATALOG (PAGINATED & REVERSED)
+----------------------------------------------------------------------------------------------------
+Description: Fetches Hollywood blockbusters (9,213 titles).
+Method:      GET
+Route:       /api/videos?type=hollywood&page=1&limit=30
+
+[CURL COMMAND]:
+curl -X GET "http://127.0.0.1:5100/api/videos?type=hollywood&page=1&limit=5" \
+     -H "Accept: application/json"
+
+[SAMPLE JSON RESPONSE]:
+{
+  "category": "hollywood",
+  "code": 200,
+  "limit": 5,
+  "page": 1,
+  "records": [
+    {
+      "client_urls": [
+        {
+          "label": "Server 1 (High-Speed HD)",
+          "url": "https://missipmain.site/getm3u8/W7GTBUXR"
+        }
+      ],
+      "genre": "Action, Sci-Fi, Thriller",
+      "id": "9212",
+      "poster": "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80",
+      "quality": "4K / 1080p HD",
+      "rating": "HD",
+      "stream_url": "https://missipmain.site/getm3u8/W7GTBUXR",
+      "title": "Deadpool & Wolverine",
+      "year": 2024
+    }
+  ],
+  "status": "success",
+  "total_available": 9213,
+  "total_pages": 1843
+}
+
+
+----------------------------------------------------------------------------------------------------
+ENDPOINT 4: REAL-TIME SEARCH QUERY (INSTANT MATCH)
+----------------------------------------------------------------------------------------------------
+Description: Real-time search across titles, genres, and release years in the database.
+Method:      GET
+Route:       /api/videos?type=bollywood&search={query}
+
+[CURL COMMAND]:
+curl -X GET "http://127.0.0.1:5100/api/videos?type=bollywood&search=Jawan" \
+     -H "Accept: application/json"
+
+[SAMPLE JSON RESPONSE]:
+{
+  "code": 200,
+  "records": [
+    {
+      "client_urls": [
+        {
+          "label": "Server 1 (High-Speed HD)",
+          "url": "https://missipmain.site/getm3u8/E45IAYZV"
+        }
+      ],
+      "genre": "Action, Thriller",
+      "id": "4901",
+      "poster": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80",
+      "quality": "4K / 1080p HD",
+      "rating": "HD",
+      "stream_url": "https://missipmain.site/getm3u8/E45IAYZV",
+      "title": "Jawan (Extended Cut)",
+      "year": 2023
+    }
+  ],
+  "status": "success",
+  "total_available": 1,
+  "total_pages": 1
+}
+
+
+====================================================================================================
+3. LOCAL & NETWORK ACCESS
+====================================================================================================
+
+Start Web Server:
+  python "c:\Yagnik\New Folder\pikashow_web_app\app.py"
+
+Browser URLs:
+  * Local PC:    http://127.0.0.1:5100
+  * Network LAN: http://192.168.1.52:5100 (Open on Mobile, Tablet, Smart TV on same Wi-Fi)
+
+====================================================================================================
+                                      END OF API DOCUMENTATION
+====================================================================================================

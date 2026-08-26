@@ -801,7 +801,7 @@
       openLiveStream(movie);
     }
 
-    async function loadLiveCatalog(cat, page = 1, searchQuery = '') {
+    async function loadLiveCatalog(cat, page = 1, searchQuery = '', shouldScroll = false) {
       currentCat = cat;
       currentPage = page;
       const grid = document.getElementById('video-grid');
@@ -832,6 +832,10 @@
           document.getElementById('jump-page-input').max = totalPages;
           renderGrid(data.records);
           renderPagination(currentPage, totalPages, searchQuery);
+          
+          if (shouldScroll) {
+            scrollToSection('section-title');
+          }
         } else {
           grid.innerHTML = `<div class="col-span-full text-rose-400 text-center py-20 text-xs sm:text-sm">Database Error: ${data.message}</div>`;
         }
@@ -869,16 +873,13 @@
       document.getElementById('search-box').value = '';
       document.getElementById('btn-clear-search').classList.add('hidden');
       loadTrendingCarousel(loadCat);
-      loadLiveCatalog(loadCat, 1);
+      loadLiveCatalog(loadCat, 1, '', true);
 
       // Auto-close sidebar drawer on mobile screens
       const sidebar = document.getElementById('sidebar-nav');
       if (sidebar && sidebar.classList.contains('drawer-open')) {
         toggleSidebar();
       }
-
-      // Scroll to category section title
-      scrollToSection('section-title');
     }
 
     function renderGrid(records) {
@@ -963,8 +964,7 @@
         }
         btn.className = baseClass;
         btn.onclick = () => {
-          scrollToSection('section-title');
-          loadLiveCatalog(currentCat, targetPage, query);
+          loadLiveCatalog(currentCat, targetPage, query, true);
         };
         return btn;
       }
@@ -1006,8 +1006,7 @@
     function jumpToPage() {
       const val = parseInt(document.getElementById('jump-page-input').value);
       if (val && val >= 1 && val <= totalPages) {
-        scrollToSection('section-title');
-        loadLiveCatalog(currentCat, val, document.getElementById('search-box').value.trim());
+        loadLiveCatalog(currentCat, val, document.getElementById('search-box').value.trim(), true);
       }
     }
 

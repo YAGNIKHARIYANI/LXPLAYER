@@ -954,7 +954,7 @@
         }
         btn.className = baseClass;
         btn.onclick = () => {
-          window.scrollTo({ top: 100, behavior: 'smooth' });
+          scrollToSection('section-title');
           loadLiveCatalog(currentCat, targetPage, query);
         };
         return btn;
@@ -997,7 +997,7 @@
     function jumpToPage() {
       const val = parseInt(document.getElementById('jump-page-input').value);
       if (val && val >= 1 && val <= totalPages) {
-        window.scrollTo({ top: 100, behavior: 'smooth' });
+        scrollToSection('section-title');
         loadLiveCatalog(currentCat, val, document.getElementById('search-box').value.trim());
       }
     }

@@ -146,7 +146,7 @@
     </div>
 
     <!-- Responsive Live Video Grid -->
-    <div id="video-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-6 md:gap-8"></div>
+    <div id="video-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[0.95rem] sm:gap-6 md:gap-8"></div>
 
     <!-- Responsive Numbered Pagination -->
     <div id="pagination" class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 mt-16 pt-10 pb-12 select-none overflow-x-auto custom-scrollbar"></div>
@@ -369,7 +369,7 @@
       list.forEach(movie => {
         const movieDataStr = encodeURIComponent(JSON.stringify(movie));
         const card = document.createElement('div');
-        card.className = 'w-36 sm:w-44 flex-shrink-0 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden hover:scale-[1.08] sm:hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 cursor-pointer relative group flex flex-col justify-between';
+        card.className = 'w-36 sm:w-44 flex-shrink-0 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden hover:scale-[1.05] sm:hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 cursor-pointer relative group flex flex-col justify-between';
         card.onclick = () => openLiveStream(movie);
 
         card.innerHTML = `
@@ -828,7 +828,7 @@
 
       records.forEach(it => {
         const card = document.createElement('div');
-        card.className = 'glass-card rounded-2xl overflow-hidden hover:scale-[1.08] sm:hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 flex flex-col justify-between group cursor-pointer relative max-w-[280px] sm:max-w-none mx-auto w-full';
+        card.className = 'glass-card rounded-2xl overflow-hidden hover:scale-[1.05] sm:hover:scale-[1.22] hover:z-30 hover:border-white hover:shadow-2xl hover:shadow-slate-950 transition-all duration-300 flex flex-col justify-between group cursor-pointer relative max-w-[280px] sm:max-w-none mx-auto w-full';
         card.onclick = () => openLiveStream(it);
 
         const inWatchlist = isInWatchlist(it.id);

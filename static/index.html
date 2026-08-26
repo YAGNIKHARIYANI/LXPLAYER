@@ -870,6 +870,12 @@
       document.getElementById('btn-clear-search').classList.add('hidden');
       loadTrendingCarousel(loadCat);
       loadLiveCatalog(loadCat, 1);
+
+      // Auto-close sidebar drawer on mobile screens
+      const sidebar = document.getElementById('sidebar-nav');
+      if (sidebar && sidebar.classList.contains('drawer-open')) {
+        toggleSidebar();
+      }
     }
 
     function renderGrid(records) {
@@ -1187,8 +1193,7 @@
       const placeholders = [
         "Search for Bollywood movies...",
         "Search for Hollywood blockbusters...",
-        "Search for Web Series...",
-        "Search for K-Dramas..."
+        "Search for New Movies..."
       ];
 
       let currentPhraseIndex = 0;

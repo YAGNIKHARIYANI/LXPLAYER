@@ -641,13 +641,25 @@
       });
     }
 
+    // --- HIGH-PERFORMANCE IN-MEMORY CLIENT CACHE (Reduces Vercel Edge Requests & Data Transfer) ---
+    const clientApiCache = new Map();
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes TTL
+
     // --- CAROUSEL LOGIC ---
     async function loadTrendingCarousel(cat) {
+      const cacheKey = `trending_${cat}`;
+      const cached = clientApiCache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+        initCarousel(cached.data);
+        return;
+      }
+
       try {
         const url = `/api/videos?type=${cat}&page=1&limit=5`;
         const res = await fetch(url);
         const data = await res.json();
         if (data.status === 'success' && data.records) {
+          clientApiCache.set(cacheKey, { timestamp: Date.now(), data: data.records });
           initCarousel(data.records);
         }
       } catch (err) {
@@ -804,18 +816,36 @@
     async function loadLiveCatalog(cat, page = 1, searchQuery = '', shouldScroll = false) {
       currentCat = cat;
       currentPage = page;
-      const grid = document.getElementById('video-grid');
-      grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 text-xs sm:text-sm"><i class="fa-solid fa-spinner fa-spin text-red-500 mr-2 text-base"></i> Loading private streaming catalog...</div>';
+      const cleanQuery = (searchQuery || '').toLowerCase().trim();
+      const cacheKey = `catalog_${cat}_p${page}_q${cleanQuery}`;
+      const cached = clientApiCache.get(cacheKey);
 
       // Hide carousel during search
       const carouselContainer = document.getElementById('trending-carousel-container');
       if (carouselContainer) {
-        if (searchQuery) {
+        if (cleanQuery) {
           carouselContainer.classList.add('hidden');
         } else if (carouselItems && carouselItems.length > 0) {
           carouselContainer.classList.remove('hidden');
         }
       }
+
+      // If present in client-side memory cache, render immediately with 0 network calls!
+      if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
+        const data = cached.data;
+        totalPages = data.total_pages || Math.ceil((data.total_available || 1) / 30);
+        document.getElementById('item-count').innerText = `${data.total_available.toLocaleString()} Titles (P. ${page}/${totalPages})`;
+        document.getElementById('jump-page-input').max = totalPages;
+        renderGrid(data.records);
+        renderPagination(currentPage, totalPages, searchQuery);
+        if (shouldScroll) {
+          scrollToSection('section-title');
+        }
+        return;
+      }
+
+      const grid = document.getElementById('video-grid');
+      grid.innerHTML = '<div class="col-span-full text-center py-20 text-slate-400 text-xs sm:text-sm"><i class="fa-solid fa-spinner fa-spin text-red-500 mr-2 text-base"></i> Loading private streaming catalog...</div>';
 
       try {
         let url = `/api/videos?type=${cat}&page=${page}&limit=30`;
@@ -827,6 +857,13 @@
         const data = await res.json();
 
         if (data.status === 'success') {
+          // Store in client-side cache
+          clientApiCache.set(cacheKey, { timestamp: Date.now(), data: data });
+          if (clientApiCache.size > 60) {
+            const oldestKey = clientApiCache.keys().next().value;
+            clientApiCache.delete(oldestKey);
+          }
+
           totalPages = data.total_pages || Math.ceil((data.total_available || 1) / 30);
           document.getElementById('item-count').innerText = `${data.total_available.toLocaleString()} Titles (P. ${page}/${totalPages})`;
           document.getElementById('jump-page-input').max = totalPages;
@@ -1167,6 +1204,7 @@
       currentMovie = null;
     }
 
+    let lastSearchQuery = '';
     function handleSearch(val) {
       clearTimeout(searchDebounceTimer);
       const query = val.trim();
@@ -1177,12 +1215,16 @@
         clearBtn.classList.add('hidden');
       }
 
+      if (query === lastSearchQuery) return;
+
       searchDebounceTimer = setTimeout(() => {
+        lastSearchQuery = query;
         loadLiveCatalog(currentCat, 1, query);
-      }, 350);
+      }, 450);
     }
 
     function clearSearch() {
+      lastSearchQuery = '';
       document.getElementById('search-box').value = '';
       document.getElementById('btn-clear-search').classList.add('hidden');
       loadLiveCatalog(currentCat, 1);

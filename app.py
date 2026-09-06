@@ -147,17 +147,7 @@ def fetch_live_catalog(category):
                 "rating": "HD",
                 "poster": poster,
                 "stream_url": stream_url or "",
-                "client_urls": client_urls,
-                "languages": [
-                    {"code": "hi", "name": "Hindi (Dolby Audio 5.1)"},
-                    {"code": "en", "name": "English (Original Audio)"},
-                    {"code": "ta", "name": "Tamil (Dubbed / Original)"},
-                    {"code": "te", "name": "Telugu (Dubbed / Original)"},
-                    {"code": "ml", "name": "Malayalam"},
-                    {"code": "kn", "name": "Kannada"},
-                    {"code": "pa", "name": "Punjabi"},
-                    {"code": "bn", "name": "Bengali"}
-                ]
+                "client_urls": client_urls
             })
 
         # REVERSE ORDER: Recent/Latest on Page 1
@@ -169,6 +159,19 @@ def fetch_live_catalog(category):
         }
         print(f"[+] [SUCCESS] Fetched, Filtered & Reversed {len(formatted)} live titles for {category}")
         return formatted
+
+@app.after_request
+def add_cache_control_headers(response):
+    if request.method == 'GET' and response.status_code == 200:
+        path = request.path
+        if path.startswith('/api/videos') or path.startswith('/v1/api/videos'):
+            # Vercel Edge caches for 30 minutes, browser caches for 5 minutes, stale-while-revalidate for 24 hours
+            response.headers['Cache-Control'] = 'public, max-age=300, s-maxage=1800, stale-while-revalidate=86400'
+        elif path == '/api/status':
+            response.headers['Cache-Control'] = 'public, max-age=60, s-maxage=300'
+        elif path == '/' or path.endswith('.html'):
+            response.headers['Cache-Control'] = 'public, max-age=600, s-maxage=3600, stale-while-revalidate=86400'
+    return response
 
 @app.route('/')
 def serve_index():
@@ -200,17 +203,31 @@ def get_videos():
             cat = 'bollywood'
 
         if cat == 'webseries':
-            base_items = fetch_live_catalog('bollywood') + fetch_live_catalog('hollywood')
-            keywords = ['season', 'episode', 'series', 's01', 's02', 's03', 'complete', 'show', 'pack', 'mirzapur', 'tv']
-            exact = [it for it in base_items if any(kw in it['title'].lower() for kw in keywords)]
-            additional = [it for it in base_items if any(g in it['genre'].lower() for g in ['sci-fi', 'mystery', 'thriller']) and it not in exact]
-            items = exact + additional
+            if 'webseries' in LIVE_CACHE and (time.time() - LIVE_CACHE['webseries']['time'] < 86400):
+                items = LIVE_CACHE['webseries']['data']
+            else:
+                base_items = fetch_live_catalog('bollywood') + fetch_live_catalog('hollywood')
+                keywords = ['season', 'episode', 'series', 's01', 's02', 's03', 'complete', 'show', 'pack', 'mirzapur', 'tv']
+                exact = [it for it in base_items if any(kw in it['title'].lower() for kw in keywords)]
+                additional = [it for it in base_items if any(g in it['genre'].lower() for g in ['sci-fi', 'mystery', 'thriller']) and it not in exact]
+                items = exact + additional
+                LIVE_CACHE['webseries'] = {
+                    'time': time.time(),
+                    'data': items
+                }
         elif cat == 'kdrama':
-            base_items = fetch_live_catalog('bollywood') + fetch_live_catalog('hollywood')
-            keywords = ['korean', 'kdrama', 'k-drama', 'japan', 'chinese', 'asian']
-            exact = [it for it in base_items if any(kw in it['title'].lower() or kw in it['genre'].lower() for kw in keywords)]
-            additional = [it for it in base_items if any(g in it['genre'].lower() for g in ['romance', 'love']) and it not in exact]
-            items = exact + additional
+            if 'kdrama' in LIVE_CACHE and (time.time() - LIVE_CACHE['kdrama']['time'] < 86400):
+                items = LIVE_CACHE['kdrama']['data']
+            else:
+                base_items = fetch_live_catalog('bollywood') + fetch_live_catalog('hollywood')
+                keywords = ['korean', 'kdrama', 'k-drama', 'japan', 'chinese', 'asian']
+                exact = [it for it in base_items if any(kw in it['title'].lower() or kw in it['genre'].lower() for kw in keywords)]
+                additional = [it for it in base_items if any(g in it['genre'].lower() for g in ['romance', 'love']) and it not in exact]
+                items = exact + additional
+                LIVE_CACHE['kdrama'] = {
+                    'time': time.time(),
+                    'data': items
+                }
         else:
             items = fetch_live_catalog(cat)
 
